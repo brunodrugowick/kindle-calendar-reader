@@ -2,7 +2,7 @@ FROM golang:1.18 AS build
 WORKDIR /make
 COPY . .
 
-RUN CGO_ENABLED=0 go build -o /bin/calendar-events ./
+RUN CGO_ENABLED=0 go build -o /bin/calendar-events ./cmd/main.go
 
 FROM alpine:latest
 RUN apk add --no-cache bash

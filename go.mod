@@ -3,7 +3,7 @@ module kindle-calendar-reader
 go 1.18
 
 require (
-	github.com/brunodrugowick/go-http-server-things v0.0.0-20210730024308-51ab92995be3
+	github.com/brunodrugowick/go-http-server-things v0.0.0-20230128183958-4b86ce14f6d6
 	golang.org/x/oauth2 v0.4.0
 	google.golang.org/api v0.108.0
 )
