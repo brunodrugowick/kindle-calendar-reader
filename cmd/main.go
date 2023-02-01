@@ -6,7 +6,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
 	"kindle-calendar-reader/pkg/api"
-	"kindle-calendar-reader/pkg/service"
+	"kindle-calendar-reader/pkg/service/auth"
+	"kindle-calendar-reader/pkg/service/events"
 	"log"
 	"os"
 	"strconv"
@@ -17,9 +18,9 @@ const defaultServerPort = 8080
 func main() {
 
 	googleAppConfig := setupGoogleAppClient()
-	myService := service.NewEventsService(googleAppConfig)
-
-	apiV1 := api.V1{Service: myService}
+	appAuth := auth.NewAuthSetupService(googleAppConfig)
+	myService := events.NewEventsService()
+	myApi := api.NewEventsApi(myService, appAuth)
 
 	serverPort, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
 	if err != nil {
@@ -30,7 +31,8 @@ func main() {
 	web := server.
 		NewDefaultServerBuilder().
 		SetPort(serverPort).
-		WithHandlerFunc("/", apiV1.GetEvents).
+		WithHandlerFunc("/", myApi.DispatchRootRequests).
+		WithHandlerFunc("/setup", myApi.DispatchSetupRequests).
 		Build()
 
 	log.Fatal(web.ListenAndServe())
