@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-type AuthSetup interface {
+type Service interface {
 	GetConfiguredHttpClient(ctx context.Context) (*http.Client, error)
 	GetRedirectUrl(host string) string
 	GetTokenFromCode(ctx context.Context, authCode string)
@@ -25,7 +25,7 @@ const (
 	tokFile string = "token.json"
 )
 
-func NewAuthSetupService(oauthConfig *oauth2.Config) AuthSetup {
+func NewAuthSetupService(oauthConfig *oauth2.Config) Service {
 	return &authSetup{
 		GoogleAppConfig: oauthConfig,
 	}
@@ -55,8 +55,7 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 func (as *authSetup) GetRedirectUrl(host string) string {
 	authURL := as.GoogleAppConfig.AuthCodeURL(
 		"state-token",
-		oauth2.AccessTypeOffline,
-		oauth2.SetAuthURLParam("redirect_uri", fmt.Sprintf("http://%s/", host)))
+		oauth2.AccessTypeOffline)
 	log.Printf("Redirect URL: %v", authURL)
 
 	return authURL

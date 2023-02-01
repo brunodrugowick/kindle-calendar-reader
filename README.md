@@ -29,9 +29,10 @@ Realistically:
 
 - [ ] Select/input calendars to show
 - [ ] Support Outlook
-- [ ] Separate into at least two API files (`/` and `/setup`)
-- [ ] Move the redirect from `/` to `setup`
+- [X] Separate into at least two API files (`/` and `/setup`)
+- [X] Move the redirect from `/` to `setup`
 - [ ] Remove hardcoded things... environment variables FTW
+- [ ] Better service layer to deal with multiple events from multiple providers (includes fixing date-related stuff)
 
 If I can dream (these are prioritized):
 
@@ -71,7 +72,7 @@ This is what the file looks like if you followed the tutorial:
     "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
     "client_secret":"<something-something>",
     "redirect_uris":[
-      "http://localhost"
+      "http://localhost/setup"
     ]
   }
 }
@@ -81,6 +82,10 @@ This is what the file looks like if you followed the tutorial:
 > in your own network. `http://localhost:8080`, for example, is fine if running on your personal machine on port 
 > `8080`. For a network deployment you might want something like `http://192.168.0.42` or
 > `http://something-that-my-local-dns-resolves` and run on port `80`.
+
+>_NOTE_: You must alse append the `/setup` at the end of the host because that's where the app expects to get the 
+> redirection back from the provider with the `code` to exchange for an access token.
+
 
 ### Token(s)
 

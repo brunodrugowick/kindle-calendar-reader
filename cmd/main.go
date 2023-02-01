@@ -6,6 +6,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
 	"kindle-calendar-reader/pkg/api"
+	eventsApi "kindle-calendar-reader/pkg/api/events"
+	"kindle-calendar-reader/pkg/api/setup"
 	"kindle-calendar-reader/pkg/service/auth"
 	"kindle-calendar-reader/pkg/service/events"
 	"log"
@@ -18,9 +20,12 @@ const defaultServerPort = 8080
 func main() {
 
 	googleAppConfig := setupGoogleAppClient()
-	appAuth := auth.NewAuthSetupService(googleAppConfig)
-	myService := events.NewEventsService()
-	myApi := api.NewEventsApi(myService, appAuth)
+	setupService := auth.NewAuthSetupService(googleAppConfig)
+	eventsService := events.NewEventsService(setupService)
+
+	var apis []api.Api
+	apis = append(apis, eventsApi.NewEventsApi(eventsService, "/"))
+	apis = append(apis, setup.NewSetupApi(setupService, "/setup"))
 
 	serverPort, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
 	if err != nil {
@@ -28,14 +33,15 @@ func main() {
 		serverPort = defaultServerPort
 	}
 
-	web := server.
+	serverBuilder := server.
 		NewDefaultServerBuilder().
-		SetPort(serverPort).
-		WithHandlerFunc("/", myApi.DispatchRootRequests).
-		WithHandlerFunc("/setup", myApi.DispatchSetupRequests).
-		Build()
+		SetPort(serverPort)
+	for _, a := range apis {
+		serverBuilder.WithHandlerFunc(a.GetPath(), a.HandleRequests)
+	}
 
-	log.Fatal(web.ListenAndServe())
+	srv := serverBuilder.Build()
+	log.Fatal(srv.ListenAndServe())
 }
 
 func setupGoogleAppClient() *oauth2.Config {

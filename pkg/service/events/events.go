@@ -6,17 +6,19 @@ import (
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 	"kindle-calendar-reader/pkg/api/types"
+	"kindle-calendar-reader/pkg/service/auth"
 	"log"
-	"net/http"
 	"strings"
 	"time"
 )
 
 type Events interface {
-	GetEvents(ctx context.Context, client *http.Client) ([]types.DisplayEvent, error)
+	GetEvents(ctx context.Context) ([]types.DisplayEvent, error)
 }
 
-type events struct{}
+type events struct {
+	authService auth.Service
+}
 
 const (
 	defaultMaxEvents    int64  = 20
@@ -24,12 +26,20 @@ const (
 	defaultOrderBy      string = "startTime"
 )
 
-func NewEventsService() Events {
-	return &events{}
+func NewEventsService(authService auth.Service) Events {
+	return &events{
+		authService: authService,
+	}
 }
 
-func (service *events) GetEvents(ctx context.Context, client *http.Client) ([]types.DisplayEvent, error) {
+func (service *events) GetEvents(ctx context.Context) ([]types.DisplayEvent, error) {
 	var displayEvents []types.DisplayEvent
+
+	client, err := service.authService.GetConfiguredHttpClient(ctx)
+	if err != nil {
+		log.Printf("Could not get a configured HTTP client due to err: %v", err)
+		return displayEvents, errors.New("could not get events")
+	}
 	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Printf("Unable to retrieve Calendar client: %v", err)
