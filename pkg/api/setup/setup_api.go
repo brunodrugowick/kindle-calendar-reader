@@ -17,11 +17,11 @@ const setupApiTokenTemplate = `<html><body>
 </body></html>`
 
 type setupApi struct {
-	auth auth.Service
+	auth auth.Auth
 	path string
 }
 
-func NewSetupApi(authService auth.Service, path string) api.Api {
+func NewSetupApi(authService auth.Auth, path string) api.Api {
 	return &setupApi{
 		auth: authService,
 		path: path,

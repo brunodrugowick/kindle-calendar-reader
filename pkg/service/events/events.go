@@ -17,7 +17,7 @@ type Events interface {
 }
 
 type events struct {
-	authService auth.Service
+	authService auth.Auth
 }
 
 const (
@@ -26,7 +26,7 @@ const (
 	defaultOrderBy      string = "startTime"
 )
 
-func NewEventsService(authService auth.Service) Events {
+func NewEventsService(authService auth.Auth) Events {
 	return &events{
 		authService: authService,
 	}

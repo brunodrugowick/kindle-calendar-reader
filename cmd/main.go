@@ -20,12 +20,12 @@ const defaultServerPort = 8080
 func main() {
 
 	googleAppConfig := setupGoogleAppClient()
-	setupService := auth.NewAuthSetupService(googleAppConfig)
-	eventsService := events.NewEventsService(setupService)
+	authService := auth.NewAuthService(googleAppConfig)
+	eventsService := events.NewEventsService(authService)
 
 	var apis []api.Api
 	apis = append(apis, eventsApi.NewEventsApi(eventsService, "/"))
-	apis = append(apis, setup.NewSetupApi(setupService, "/setup"))
+	apis = append(apis, setup.NewSetupApi(authService, "/setup"))
 
 	serverPort, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
 	if err != nil {

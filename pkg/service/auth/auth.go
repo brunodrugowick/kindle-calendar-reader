@@ -11,13 +11,13 @@ import (
 	"os"
 )
 
-type Service interface {
+type Auth interface {
 	GetConfiguredHttpClient(ctx context.Context) (*http.Client, error)
 	GetRedirectUrl(host string) string
 	GetTokenFromCode(ctx context.Context, authCode string)
 }
 
-type authSetup struct {
+type auth struct {
 	GoogleAppConfig *oauth2.Config
 }
 
@@ -25,13 +25,13 @@ const (
 	tokFile string = "token.json"
 )
 
-func NewAuthSetupService(oauthConfig *oauth2.Config) Service {
-	return &authSetup{
+func NewAuthService(oauthConfig *oauth2.Config) Auth {
+	return &auth{
 		GoogleAppConfig: oauthConfig,
 	}
 }
 
-func (as *authSetup) GetConfiguredHttpClient(ctx context.Context) (*http.Client, error) {
+func (as *auth) GetConfiguredHttpClient(ctx context.Context) (*http.Client, error) {
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
 		log.Printf("Could not read token file from %s", tokFile)
@@ -52,7 +52,7 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 	return tok, err
 }
 
-func (as *authSetup) GetRedirectUrl(host string) string {
+func (as *auth) GetRedirectUrl(host string) string {
 	authURL := as.GoogleAppConfig.AuthCodeURL(
 		"state-token",
 		oauth2.AccessTypeOffline)
@@ -61,7 +61,7 @@ func (as *authSetup) GetRedirectUrl(host string) string {
 	return authURL
 }
 
-func (as *authSetup) GetTokenFromCode(ctx context.Context, authCode string) {
+func (as *auth) GetTokenFromCode(ctx context.Context, authCode string) {
 	tok, err := as.GoogleAppConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
 		log.Printf("Unable to retrieve token from web: %v", err)
