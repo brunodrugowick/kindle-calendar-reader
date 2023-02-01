@@ -27,6 +27,10 @@ With all that in mind I thought of a very simple web application where:
 
 Realistically:
 
+- [ ] Proper HTML templates instead of `const`
+- [ ] Better UI for the Today page
+- [ ] Better UI for the Setup page
+- [ ] Make use of the refresh token
 - [ ] Select/input calendars to show
 - [ ] Support Outlook
 - [X] Separate into at least two API files (`/` and `/setup`)
@@ -42,23 +46,15 @@ If I can dream (these are prioritized):
 4. Option to have a websocket updating the events automatically
 5. ...
 
+## Want to  use this?
 
-## Development
-
-Take a look at the `Makefile` if you want to get started.
-
-## Deployment?
-
-Ok, you, a second person in this world that also thinks this is a problem to be solved, wants to deploy this solution?
-This is what you need.
+Why? But ok, I can give some directions...
 
 ### Application Credentials
 
-While this is not a web app properly deployed to the interwebs, you need to set up your own client within Google 
-(Outlook soon).
+In the current state, this is a client that you configure to access your (Google only) Calendar events. So you need to set up your own client within Google (Outlook soon, I promise).
 
-Basically, you need to set up a project, credentials and enable the Google Calendar API for it. Follow [this guide from 
-Google](https://developers.google.com/calendar/api/quickstart/go) to get a `credentials.json` file and put it on the root of the project directory.
+Basically, you need to set up a project, credentials and enable the Google Calendar API for it. Follow [this guide from Google](https://developers.google.com/calendar/api/quickstart/go) to get a `credentials.json` file and put it on the root of the project directory.
 
 This is what the file looks like if you followed the tutorial:
 
@@ -86,12 +82,11 @@ This is what the file looks like if you followed the tutorial:
 >_NOTE_: You must alse append the `/setup` at the end of the host because that's where the app expects to get the 
 > redirection back from the provider with the `code` to exchange for an access token.
 
-
 ### Token(s)
 
 This is **not** a multi-tenant application. You currently can set up one Google account to view events from. When you 
-hit the `/setup` endpoint (or when the app detects that there's no tokens available), you get a a chance to 
-configure a token that will be used to request calendar events on your behalf.
+hit the `/setup` endpoint (or when the app detects that there are no tokens configured), you get a chance to configure 
+a token that will be used to request calendar events on your behalf.
 
 > _NOTE_: your credentials never leave your computer, this is safe to use, I'm not tricking you. But I must say
 > that if you don't understand how all this works, you better not use this app at all.  
@@ -102,8 +97,8 @@ You can use the `make` target `run` to run a docker container. Default port is `
 directly on the `Makefile` or, since you should know what you're doing because you're still reading this, with the 
 environment variable `SERVER_PORT`.
 
-You have to make sure you configure the `redirect_uri` in the `credentials.json` file according to the host and port
-you will be using to access the application. For example, if this will run on port 8888 on a host that answers by
+Again, you have to make sure you configure the `redirect_uri` in the `credentials.json` file according to the host and
+port you will be using to access the application. For example, if this will run on port 8888 on a host that answers by
 `my-docker-server`, the value for `redirect_uri` should be:
 
 ```
@@ -114,4 +109,14 @@ Then you a run the below command on your docker server (or modify the Makefile t
 
 ```bash
 SERVER_PORT=8888 make run
+```
+
+You could also only `make build` and later run the app on a docker server (or under a context configured to use your
+local docker server) with:
+
+```bash
+docker container run \
+        --name kindle-calendar-reader \
+ 		-p 80:8080 \
+ 		drugowick.dev/kindle-calendar-reader
 ```
