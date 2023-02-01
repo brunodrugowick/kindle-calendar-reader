@@ -1,12 +1,17 @@
 # Calendar Reader for Kindle
 
+A client app that connects to your calendars and serves a simple HTML page with your events for the day. The
+page is simple enough for Kindle and other low-performance devices with rudimentary browsers be able to access it.
+
+## Why?
+
 This is a personal project and a rough idea still under refinement. The motivation is that I wanted to put together 
 the events from multiple calendars (personal and professional - which are often from different providers like Google 
 and Microsoft) in a very simple daily view that I could load into my Kindle on the wall in my office.
 
 I believe this is going to be very helpful especially because I work from home and in this setup it's very common to 
 have small personal tasks that you need to take care during the work hours. Similarly, it's common to have professional
-responsibilities that go into my personal time.
+responsibilities that happen on my personal time.
 
 I have a home server (which only means "an old computer hidden somewhere and connected to the network") where I can
 deploy a very simple application that serves a "Today" page with my schedule. This is very important here because 
@@ -15,8 +20,8 @@ the web browser is very limited in these devices.
 
 With all that in mind I thought of a very simple web application where:
 
-- I can set up my credentials to access my calendars from any device in the network
-- I can access from the Kindle to see a simple view of the events of the day
+- I can set up my credentials to access my calendars from any device in the network (one with a modern browser);
+- I can access a simple view from my Kindle to see the events of the day
 
 ## TODO
 
@@ -24,13 +29,18 @@ Realistically:
 
 - [ ] Select/input calendars to show
 - [ ] Support Outlook
+- [ ] Separate into at least two API files (`/` and `/setup`)
+- [ ] Move the redirect from `/` to `setup`
 - [ ] Remove hardcoded things... environment variables FTW
-- [ ] Introduce Javascript for proper Authorization Code flow
 
-If I can dream:
+If I can dream (these are prioritized):
 
-- [ ] Proper multi-tenant web application
-- [ ] ...
+1. Unit tests
+2. At least Basic auth to access the "Today" page
+3. Proper multi-tenant web application
+4. Option to have a websocket updating the events automatically
+5. ...
+
 
 ## Development
 
