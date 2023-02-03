@@ -48,13 +48,16 @@ If I can dream (these are prioritized):
 
 ## Want to  use this?
 
-Why? But ok, I can give some directions...
+Why? But ok, I can give you some directions...
 
 ### Application Credentials
 
-In the current state, this is a client that you configure to access your (Google only) Calendar events. So you need to set up your own client within Google (Outlook soon, I promise).
+In the current state, this is a client that you configure to access your (Google only) Calendar events. So you need to 
+set up your own client within Google (Outlook soon, I promise).
 
-Basically, you need to set up a project, credentials and enable the Google Calendar API for it. Follow [this guide from Google](https://developers.google.com/calendar/api/quickstart/go) to get a `credentials.json` file and put it on the root of the project directory.
+Basically, you need to set up a project, credentials and enable the Google Calendar API for it. Follow [this guide from
+Google](https://developers.google.com/calendar/api/quickstart/go) to get a `credentials.json` file and put it on the 
+root of the project directory.
 
 This is what the file looks like if you followed the tutorial:
 
@@ -68,18 +71,13 @@ This is what the file looks like if you followed the tutorial:
     "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
     "client_secret":"<something-something>",
     "redirect_uris":[
-      "http://localhost/setup"
+      "http://localhost:8080/setup"
     ]
   }
 }
 ```
 
->_NOTE_: You must set up the `redirect_uris` according to your setup of host and port where you're accessing this
-> in your own network. `http://localhost:8080`, for example, is fine if running on your personal machine on port 
-> `8080`. For a network deployment you might want something like `http://192.168.0.42` or
-> `http://something-that-my-local-dns-resolves` and run on port `80`.
-
->_NOTE_: You must alse append the `/setup` at the end of the host because that's where the app expects to get the 
+>_NOTE_: You must append the `/setup` at the end of the host because that's where the app expects to get the 
 > redirection back from the provider with the `code` to exchange for an access token.
 
 ### Token(s)
@@ -91,32 +89,51 @@ a token that will be used to request calendar events on your behalf.
 > _NOTE_: your credentials never leave your computer, this is safe to use, I'm not tricking you. But I must say
 > that if you don't understand how all this works, you better not use this app at all.  
 
-### Deploy and run
+### Run
 
 You can use the `make` target `run` to run a docker container. Default port is `8080`, but you can customize it
 directly on the `Makefile` or, since you should know what you're doing because you're still reading this, with the 
 environment variable `SERVER_PORT`.
 
-Again, you have to make sure you configure the `redirect_uri` in the `credentials.json` file according to the host and
-port you will be using to access the application. For example, if this will run on port 8888 on a host that answers by
-`my-docker-server`, the value for `redirect_uri` should be:
-
-```
-http://my-docker-server:8888/
-```
-
-Then you a run the below command on your docker server (or modify the Makefile to use another context or something):
+Here's an example:
 
 ```bash
 SERVER_PORT=8888 make run
 ```
 
-You could also only `make build` and later run the app on a docker server (or under a context configured to use your
-local docker server) with:
+### Deploy
+
+Well, since this uses OAuth to Google and Outlook, it's a pain to make this work on remote hosts. I'm not complaining,
+there's a reason for that. But, if you still are reading and really want to deploy in a remote host on your network:
+
+>_NOTE_: The following instructions assume you understand what you're doing, so, please, DO NOT CONTINUE if you are not
+> sure about anything that I said in the previous sessions. And good day. Bye!
+
+What I do to bypass the OAuth stuff is to run the app once in my local machine, where I can successfully use localhost
+to set up a token in a `token.json` file. This will contain your credentials to access Calendar (Google). 
+
+Then I modify `.dockerignore` to stop ignoring the `token.json` file. And then I also modify `Dockerfile` to add a `COPY`
+line right after the line that copies `credentials.json`:
+
+```dockerfile
+COPY token.json token.json
+```
+
+After that, I connect to a remote docker host running on my local network:
 
 ```bash
-docker container run \
-        --name kindle-calendar-reader \
- 		-p 80:8080 \
- 		drugowick.dev/kindle-calendar-reader
+docker context use kindle-calendar-reader
+```
+
+And finally I run the app again on this remote docker host:
+
+```bash
+SERVER_PORT=80 make run
+```
+
+Now, until the token expires (while I don't do a refresh of it), you're good to go by accessing the remote host in your
+browser.
+
+```
+http://192.168.0.66/
 ```
