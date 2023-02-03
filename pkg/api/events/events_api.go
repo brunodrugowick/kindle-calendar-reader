@@ -9,13 +9,13 @@ import (
 	"net/http"
 )
 
-const todayPageTemplate = `<html><body>
-<h1>Today</h1>
+const todayPageTemplate = `<html><title>Today</title><body>
 {{range .}}
 	<div class="container">
-		<p><small><b>{{.Day}}</b> {{.TimeSlot}}</small><br>{{.Description}}
+		<p><small>{{if .AllDay}} <b>All Day</b> {{else}}<b>{{.Day}}</b> {{.StartTime}} - {{.EndTime}} {{end}}</small><br>{{.Description}}
 	</div>
 {{end}}
+<p>That's it for today! See you tomorrow.
 </body></html>`
 
 type eventsApi struct {

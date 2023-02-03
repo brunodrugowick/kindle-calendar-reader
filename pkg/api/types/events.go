@@ -2,6 +2,8 @@ package types
 
 type DisplayEvent struct {
 	Day         string
-	TimeSlot    string
+	StartTime   string
+	EndTime     string
+	AllDay      bool
 	Description string
 }

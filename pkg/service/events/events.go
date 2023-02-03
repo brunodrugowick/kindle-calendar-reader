@@ -3,12 +3,12 @@ package events
 import (
 	"context"
 	"errors"
+	"fmt"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 	"kindle-calendar-reader/pkg/api/types"
 	"kindle-calendar-reader/pkg/service/auth"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -21,9 +21,10 @@ type events struct {
 }
 
 const (
-	defaultMaxEvents    int64  = 20
-	defaultCalendarName string = "primary"
-	defaultOrderBy      string = "startTime"
+	defaultMaxEvents           int64  = 20
+	defaultCalendarName        string = "primary"
+	defaultOrderBy             string = "startTime"
+	timePortionOfRFC3339Format string = "T15:04:05Z07:00"
 )
 
 func NewEventsService(authService auth.Auth) Events {
@@ -46,14 +47,18 @@ func (service *events) GetEvents(ctx context.Context) ([]types.DisplayEvent, err
 		return displayEvents, errors.New("unable to retrieve Calendar client")
 	}
 
-	t := truncateToStartOfDay(time.Now()).Format(time.RFC3339)
-	log.Printf("Getting events starting at %v", t)
+	now := time.Now()
+	startOfTheDay := truncateToStartOfDay(now).Format(time.RFC3339)
+	endOfTheDay := truncateToEndOfDay(now).Format(time.RFC3339)
+
+	log.Printf("Getting events starting at %v", startOfTheDay)
 	maxEvents := defaultMaxEvents
 	events, err := srv.Events.
 		List(defaultCalendarName).
 		ShowDeleted(false).
 		SingleEvents(true).
-		TimeMin(t).
+		TimeMin(startOfTheDay).
+		TimeMax(endOfTheDay).
 		MaxResults(maxEvents).
 		OrderBy(defaultOrderBy).
 		Do()
@@ -63,30 +68,31 @@ func (service *events) GetEvents(ctx context.Context) ([]types.DisplayEvent, err
 	}
 
 	for _, event := range events.Items {
-		var day, timeSlot string
-		if event.Start.DateTime != "" {
-			day = strings.Split(event.Start.DateTime, "T")[0]
-			timeSlot = shamelessCuttingThingsAway(event)
+		var start, end time.Time
+		var allDay bool
+		if event.Start.DateTime == "" { // All day events only have the .Start.Date value
+			start, err = time.Parse(time.RFC3339, event.Start.Date+timePortionOfRFC3339Format)
+			allDay = true
 		} else {
-			timeSlot = event.Start.Date
+			start, err = time.Parse(time.RFC3339, event.Start.DateTime)
+			if err != nil {
+				continue
+			}
+
+			end, err = time.Parse(time.RFC3339, event.End.DateTime)
+			allDay = false
 		}
 
 		displayEvents = append(displayEvents, types.DisplayEvent{
-			Day:         day,
-			TimeSlot:    timeSlot,
+			Day:         fmt.Sprintf("%s %02d", start.Month().String(), start.Day()),
+			StartTime:   fmt.Sprintf("%02d:%02d", start.Hour(), start.Minute()),
+			EndTime:     fmt.Sprintf("%02d:%02d", end.Hour(), end.Minute()),
+			AllDay:      allDay,
 			Description: event.Summary,
 		})
 	}
 
 	return displayEvents, nil
-}
-
-func shamelessCuttingThingsAway(event *calendar.Event) string {
-	startString := strings.Split(strings.SplitAfter(event.Start.DateTime, "T")[1], "-")[0]
-	separator := " - "
-	endString := strings.Split(strings.SplitAfterN(event.End.DateTime, "T", 2)[1], "-")[0]
-
-	return startString + separator + endString
 }
 
 // truncateToStartOfDay is from https://stackoverflow.com/questions/25254443/return-local-beginning-of-day-time-object
