@@ -36,7 +36,8 @@ Realistically:
 - [X] Separate into at least two API files (`/` and `/setup`)
 - [X] Move the redirect from `/` to `setup`
 - [ ] Remove hardcoded things... environment variables FTW
-- [ ] Better service layer to deal with multiple events from multiple providers (includes fixing date-related stuff)
+- [ ] Better service layer with a Composite of providers
+- [X] Fix date-related stuff
 
 If I can dream (these are prioritized):
 
