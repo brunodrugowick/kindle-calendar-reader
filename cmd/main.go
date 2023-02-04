@@ -19,27 +19,29 @@ const defaultServerPort = 8080
 
 func main() {
 
+	// Services
 	googleAppConfig := setupGoogleAppClient()
 	authService := auth.NewAuthService(googleAppConfig)
-	eventsService := events.NewEventsService(authService)
+	googleEventsService := events.NewGoogleEventsService(authService)
+	eventsService := events.NewEventsDelegator(googleEventsService)
 
+	// APIs
 	var apis []api.Api
 	apis = append(apis, eventsApi.NewEventsApi(eventsService, "/"))
 	apis = append(apis, setup.NewSetupApi(authService, "/setup"))
 
+	// Server
 	serverPort, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
 	if err != nil {
 		log.Printf("Cannot read server port from environment, setting default value: %d", defaultServerPort)
 		serverPort = defaultServerPort
 	}
-
 	serverBuilder := server.
 		NewDefaultServerBuilder().
 		SetPort(serverPort)
 	for _, a := range apis {
 		serverBuilder.WithHandlerFunc(a.GetPath(), a.HandleRequests)
 	}
-
 	srv := serverBuilder.Build()
 	log.Fatal(srv.ListenAndServe())
 }
