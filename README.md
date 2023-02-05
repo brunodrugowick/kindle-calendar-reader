@@ -106,7 +106,7 @@ environment variable `SERVER_PORT`.
 Here's an example:
 
 ```bash
-SERVER_PORT=8888 make run
+make SERVER_PORT=8888 run
 ```
 
 ### Deploy
@@ -136,7 +136,7 @@ docker context use kindle-calendar-reader
 And finally I run the app again on this remote docker host:
 
 ```bash
-SERVER_PORT=80 make run
+make SERVER_PORT=80 run
 ```
 
 Now, until the token expires (while I don't do a refresh of it), you're good to go by accessing the remote host in your
@@ -145,3 +145,4 @@ browser.
 ```
 http://192.168.0.66/
 ```
+
