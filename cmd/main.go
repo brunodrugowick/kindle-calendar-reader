@@ -7,6 +7,7 @@ import (
 	"google.golang.org/api/calendar/v3"
 	"kindle-calendar-reader/pkg/api"
 	eventsApi "kindle-calendar-reader/pkg/api/events"
+	"kindle-calendar-reader/pkg/api/json"
 	"kindle-calendar-reader/pkg/api/setup"
 	"kindle-calendar-reader/pkg/service/auth"
 	"kindle-calendar-reader/pkg/service/events"
@@ -29,6 +30,7 @@ func main() {
 	var apis []api.Api
 	apis = append(apis, eventsApi.NewEventsApi(eventsService, "/"))
 	apis = append(apis, setup.NewSetupApi(authService, "/setup"))
+	apis = append(apis, json.NewJsonApi(eventsService, "/json"))
 
 	// Server
 	serverPort, err := strconv.Atoi(os.Getenv("SERVER_PORT"))

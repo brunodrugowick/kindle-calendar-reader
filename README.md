@@ -3,6 +3,12 @@
 A client app that connects to your calendars and serves a simple HTML page with your events for the day. The
 page is simple enough for Kindle and other low-performance devices with rudimentary browsers be able to access it.
 
+Routes:
+
+- `/`: the root route serves a HTML page with a rudimentary list of events
+- `/setup`: servers a HTML page with a link to redirect you to Google to authorize the app
+- `/json`: for convenience, serves the same list of events in a JSON format
+
 ## Why?
 
 This is a personal project and a rough idea still under refinement. The motivation is that I wanted to put together 

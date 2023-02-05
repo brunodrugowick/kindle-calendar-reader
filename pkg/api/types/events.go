@@ -1,9 +1,9 @@
 package types
 
 type DisplayEvent struct {
-	Day         string
-	StartTime   string
-	EndTime     string
-	AllDay      bool
-	Description string
+	Day         string `json:"day"`
+	StartTime   string `json:"startTime"`
+	EndTime     string `json:"endTime"`
+	AllDay      bool   `json:"allDay"`
+	Description string `json:"description"`
 }
