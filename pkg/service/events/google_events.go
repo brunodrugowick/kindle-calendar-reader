@@ -78,11 +78,12 @@ func (service *events) GetEvents(ctx context.Context) ([]types.DisplayEvent, err
 		}
 
 		displayEvents = append(displayEvents, types.DisplayEvent{
-			Day:         fmt.Sprintf("%s %02d", start.Month().String(), start.Day()),
-			StartTime:   fmt.Sprintf("%02d:%02d", start.Hour(), start.Minute()),
-			EndTime:     fmt.Sprintf("%02d:%02d", end.Hour(), end.Minute()),
-			AllDay:      allDay,
-			Description: event.Summary,
+			Day:            fmt.Sprintf("%s %02d", start.Month().String(), start.Day()),
+			StartTime:      fmt.Sprintf("%02d:%02d", start.Hour(), start.Minute()),
+			EndTime:        fmt.Sprintf("%02d:%02d", end.Hour(), end.Minute()),
+			StartTimestamp: start,
+			AllDay:         allDay,
+			Description:    event.Summary,
 		})
 	}
 
