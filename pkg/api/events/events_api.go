@@ -40,7 +40,7 @@ func (api *eventsApi) GetPath() string {
 }
 
 func getEvents(ctx context.Context, w http.ResponseWriter, r *http.Request, api *eventsApi) {
-	displayEvents, err := api.events.GetEvents(ctx)
+	displayEvents, err := api.events.GetEventsStartingToday(ctx)
 	if err != nil {
 		http.Redirect(w, r, "/setup", http.StatusFound)
 	}

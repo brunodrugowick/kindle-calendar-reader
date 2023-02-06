@@ -5,9 +5,10 @@ page is simple enough for Kindle and other low-performance devices with rudiment
 
 Routes:
 
-- `/`: the root route serves a HTML page with a rudimentary list of events
-- `/setup`: servers a HTML page with a link to redirect you to Google to authorize the app
-- `/json`: for convenience, serves the same list of events in a JSON format
+- `/`: the root route serves an HTML page with a rudimentary list of events starting from the beginning of the current day
+- `/setup`: servers an HTML page with a link to redirect you to Google to authorize the app
+- `/json`: for convenience, serves the same list of events in a JSON format (starting from the beginning of the current day)
+  - `?startDate=2023-02-14T18:00:00-03:00`: this optional query param is support for even more laziness. I personally integrated into a Gnome Extension to always show my next meeting of the day.
 
 ## Why?
 

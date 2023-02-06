@@ -4,10 +4,12 @@ import (
 	"context"
 	"kindle-calendar-reader/pkg/api/types"
 	"log"
+	"time"
 )
 
 type Events interface {
-	GetEvents(ctx context.Context) ([]types.DisplayEvent, error)
+	GetEventsStartingToday(ctx context.Context) ([]types.DisplayEvent, error)
+	GetEventsStartingAt(ctx context.Context, time time.Time) ([]types.DisplayEvent, error)
 }
 
 type eventsDelegator struct {
@@ -22,9 +24,21 @@ func NewEventsDelegator(eventService ...Events) Events {
 	return &delegator
 }
 
-func (delegator *eventsDelegator) GetEvents(ctx context.Context) (allEvents []types.DisplayEvent, err error) {
+func (delegator *eventsDelegator) GetEventsStartingToday(ctx context.Context) (allEvents []types.DisplayEvent, err error) {
 	for _, delegate := range delegator.delegates {
-		events, err := delegate.GetEvents(ctx)
+		events, err := delegate.GetEventsStartingToday(ctx)
+		if err != nil {
+			log.Printf("Error getting events from delegator %s: %v", delegate, err)
+			continue
+		}
+		allEvents = append(allEvents, events...)
+	}
+	return
+}
+
+func (delegator *eventsDelegator) GetEventsStartingAt(ctx context.Context, start time.Time) (allEvents []types.DisplayEvent, err error) {
+	for _, delegate := range delegator.delegates {
+		events, err := delegate.GetEventsStartingAt(ctx, start)
 		if err != nil {
 			log.Printf("Error getting events from delegator %s: %v", delegate, err)
 			continue

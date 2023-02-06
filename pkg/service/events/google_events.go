@@ -29,39 +29,55 @@ func NewGoogleEventsService(authService auth.Auth) Events {
 	}
 }
 
-func (service *events) GetEvents(ctx context.Context) ([]types.DisplayEvent, error) {
-	var displayEvents []types.DisplayEvent
+func (service *events) GetEventsStartingToday(ctx context.Context) ([]types.DisplayEvent, error) {
+	timeMin := startOfDay(time.Now())
+	displayEvents, err := service.getEvents(ctx, timeMin)
+	if err != nil {
+		return []types.DisplayEvent{}, err
+	}
 
+	return displayEvents, nil
+}
+
+func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time) ([]types.DisplayEvent, error) {
+	displayEvents, err := service.getEvents(ctx, start)
+	if err != nil {
+		return []types.DisplayEvent{}, err
+	}
+
+	return displayEvents, nil
+}
+
+func (service *events) getEvents(ctx context.Context, startDate time.Time) ([]types.DisplayEvent, error) {
+	var displayEvents []types.DisplayEvent
 	client, err := service.authService.GetConfiguredHttpClient(ctx)
 	if err != nil {
 		log.Printf("Could not get a configured HTTP client due to err: %v", err)
 		return displayEvents, errors.New("could not get events")
 	}
+	// TODO start service when new'in this up?
 	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Printf("Unable to retrieve Calendar client: %v", err)
 		return displayEvents, errors.New("unable to retrieve Calendar client")
 	}
 
-	now := time.Now()
-	startOfTheDay := startOfDay(now).Format(time.RFC3339)
-
-	log.Printf("Getting events starting at %v", startOfTheDay)
+	log.Printf("Getting events starting at %v", startDate)
 	maxEvents := defaultMaxEvents
-	events, err := srv.Events.
+	googleEvents, err := srv.Events.
 		List(defaultCalendarName).
 		ShowDeleted(false).
 		SingleEvents(true).
-		TimeMin(startOfTheDay).
+		TimeMin(startDate.Format(time.RFC3339)).
 		MaxResults(maxEvents).
 		OrderBy(defaultOrderBy).
 		Do()
 	if err != nil {
 		log.Printf("Unable to retrieve next %d of the user's events: %v", maxEvents, err)
-		return displayEvents, errors.New("error retrieving events")
+		return displayEvents, errors.New("error retrieving events from Google")
 	}
 
-	for _, event := range events.Items {
+	for _, event := range googleEvents.Items {
 		var start, end time.Time
 		var allDay bool
 		if event.Start.DateTime == "" { // All day events only have the .Start.Date value
