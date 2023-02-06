@@ -44,8 +44,10 @@ Realistically:
 - [X] Move the redirect from `/` to `setup`
 - [ ] Remove hardcoded things... environment variables FTW
 - [X] Better service layer with a Composite of providers
-- [ ] Review AP layer and propose improvements
+- [ ] Review API layer and propose improvements
 - [X] Fix date-related stuff
+- [ ] New "next events" endpoint to get an X number of events to come
+- [ ] Take in more inputs on the JSON requests like `limit`
 
 If I can dream (these are prioritized):
 
@@ -147,3 +149,18 @@ browser.
 http://192.168.0.66/
 ```
 
+I personally use the [Executor Gnome extension](https://extensions.gnome.org/extension/2932/executor/) with the 
+following command to show my next event right on the top bar of my Operating System:
+
+```bash
+curl -s http://192.168.0.66/json?startDate=$(date --rfc-3339=seconds | tr " " "T") | jq '.[0] | select(.allDay == false) | del(.startTimestamp) | del(.allDay)' | jq -r 'to_entries|map("\(.value|tostring)  ")|.[]'
+```
+
+Quick explanation:
+
+- `date --rfc-3339=seconds | tr " " "T"` gets current date in the RFC-3339 format, but without the `T` so I add it with `tr`.
+- `jq '.[0]` gets the first entry.
+- `select(.allDay == false)` excludes all-day events. 
+- `del(.startTimestamp) | del(.allDay)'` deletes these fields from the resulting JSON.
+- `jq -r 'to_entries|map("\(.value|tostring)  ")|.[]'` prints only the values without the keys...
+  - ... also adds a space after each attribute because Executor removes line breaks.
