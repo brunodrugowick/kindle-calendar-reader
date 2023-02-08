@@ -9,11 +9,17 @@ type Api interface {
 	GetPath() string
 }
 
-func ParseFormAndGetFromRequest(r *http.Request, queryOrAttr string) (got string, err error) {
-	err = r.ParseForm()
+func ParseFormAndGetFromRequest(r *http.Request, queryOrAttrs ...string) (map[string]string, error) {
+	got := make(map[string]string, len(queryOrAttrs))
+
+	err := r.ParseForm()
 	if err != nil {
 		return got, err
 	}
-	got = r.Form.Get(queryOrAttr)
+
+	for _, queryOrAttr := range queryOrAttrs {
+		got[queryOrAttr] = r.Form.Get(queryOrAttr)
+	}
+
 	return got, nil
 }

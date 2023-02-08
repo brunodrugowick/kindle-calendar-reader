@@ -7,6 +7,7 @@ import (
 	"kindle-calendar-reader/pkg/api/types"
 	"kindle-calendar-reader/pkg/service/events"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -22,28 +23,38 @@ func NewJsonApi(events events.Events, path string) api.Api {
 	}
 }
 
+const startDateQueryParam = "startDate"
+const limitQueryParam = "limit"
+
 func (a *jsonApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	w.Header().Set("Content-Type", "application/json")
 
-	startString, err := api.ParseFormAndGetFromRequest(r, "startDate")
+	queryParams, queryParamsErr := api.ParseFormAndGetFromRequest(r, startDateQueryParam, limitQueryParam)
+
+	limit, queryParamsErr := strconv.ParseInt(queryParams[limitQueryParam], 10, 64)
+	if queryParamsErr != nil {
+		limit = 20
+	}
+
 	var displayEvents []types.DisplayEvent
-	switch len(startString) {
+	var serviceErr error
+	switch len(queryParams[startDateQueryParam]) {
 	case 0:
-		displayEvents, err = a.events.GetEventsStartingToday(ctx)
+		displayEvents, serviceErr = a.events.GetEventsStartingToday(ctx, limit)
 	default:
-		startTime, err := time.Parse(time.RFC3339, startString)
-		if err != nil {
+		startTime, conversionErr := time.Parse(time.RFC3339, queryParams[startDateQueryParam])
+		if conversionErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		displayEvents, err = a.events.GetEventsStartingAt(ctx, startTime)
+		displayEvents, serviceErr = a.events.GetEventsStartingAt(ctx, startTime, limit)
 	}
-	if err != nil {
+	if serviceErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(displayEvents)
 	return

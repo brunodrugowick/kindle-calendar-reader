@@ -28,19 +28,22 @@ func NewSetupApi(authService auth.Auth, path string) api.Api {
 	}
 }
 
+const codeQueryParam = "code"
+
 func (a *setupApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	code, err := api.ParseFormAndGetFromRequest(r, "code")
+
+	queryParams, err := api.ParseFormAndGetFromRequest(r, codeQueryParam)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	switch len(code) {
+	switch len(queryParams[codeQueryParam]) {
 	case 0:
 		setupRouteGetRequest(w, r, a)
 	default:
-		a.auth.GetTokenFromCode(ctx, code)
+		a.auth.GetTokenFromCode(ctx, queryParams[codeQueryParam])
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 }

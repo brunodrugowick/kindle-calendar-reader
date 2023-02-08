@@ -29,9 +29,9 @@ func NewGoogleEventsService(authService auth.Auth) Events {
 	}
 }
 
-func (service *events) GetEventsStartingToday(ctx context.Context) ([]types.DisplayEvent, error) {
+func (service *events) GetEventsStartingToday(ctx context.Context, limit int64) ([]types.DisplayEvent, error) {
 	timeMin := startOfDay(time.Now())
-	displayEvents, err := service.getEvents(ctx, timeMin)
+	displayEvents, err := service.getEvents(ctx, timeMin, limit)
 	if err != nil {
 		return []types.DisplayEvent{}, err
 	}
@@ -39,8 +39,8 @@ func (service *events) GetEventsStartingToday(ctx context.Context) ([]types.Disp
 	return displayEvents, nil
 }
 
-func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time) ([]types.DisplayEvent, error) {
-	displayEvents, err := service.getEvents(ctx, start)
+func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
+	displayEvents, err := service.getEvents(ctx, start, limit)
 	if err != nil {
 		return []types.DisplayEvent{}, err
 	}
@@ -48,7 +48,10 @@ func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time)
 	return displayEvents, nil
 }
 
-func (service *events) getEvents(ctx context.Context, startDate time.Time) ([]types.DisplayEvent, error) {
+func (service *events) getEvents(ctx context.Context, startDate time.Time, limit int64) ([]types.DisplayEvent, error) {
+	if limit < 1 {
+		limit = defaultMaxEvents
+	}
 	var displayEvents []types.DisplayEvent
 	client, err := service.authService.GetConfiguredHttpClient(ctx)
 	if err != nil {
@@ -63,17 +66,16 @@ func (service *events) getEvents(ctx context.Context, startDate time.Time) ([]ty
 	}
 
 	log.Printf("Getting events starting at %v", startDate)
-	maxEvents := defaultMaxEvents
 	googleEvents, err := srv.Events.
 		List(defaultCalendarName).
 		ShowDeleted(false).
 		SingleEvents(true).
 		TimeMin(startDate.Format(time.RFC3339)).
-		MaxResults(maxEvents).
+		MaxResults(limit).
 		OrderBy(defaultOrderBy).
 		Do()
 	if err != nil {
-		log.Printf("Unable to retrieve next %d of the user's events: %v", maxEvents, err)
+		log.Printf("Unable to retrieve next %d of the user's events: %v", limit, err)
 		return displayEvents, errors.New("error retrieving events from Google")
 	}
 

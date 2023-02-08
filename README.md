@@ -46,8 +46,8 @@ Realistically:
 - [X] Better service layer with a Composite of providers
 - [ ] Review API layer and propose improvements
 - [X] Fix date-related stuff
-- [ ] New "next events" endpoint to get an X number of events to come
-- [ ] Take in more inputs on the JSON requests like `limit`
+- [X] New "next events" endpoint to get an X number of events to come
+- [X] Take in more inputs on the JSON requests like `limit`
 
 If I can dream (these are prioritized):
 
