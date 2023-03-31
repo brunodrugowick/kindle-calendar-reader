@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"google.golang.org/api/calendar/v3"
-	"google.golang.org/api/option"
 	"kindle-calendar-reader/pkg/api/types"
 	"kindle-calendar-reader/pkg/service/auth"
 	"log"
 	"time"
+
+	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/option"
 )
 
 type events struct {
@@ -27,6 +28,10 @@ func NewGoogleEventsService(authService auth.Auth) Events {
 	return &events{
 		authService: authService,
 	}
+}
+
+func (service *events) Name() string {
+	return "Google Service"
 }
 
 func (service *events) GetEventsStartingToday(ctx context.Context, limit int64) ([]types.DisplayEvent, error) {
@@ -56,7 +61,7 @@ func (service *events) getEvents(ctx context.Context, startDate time.Time, limit
 	client, err := service.authService.GetConfiguredHttpClient(ctx)
 	if err != nil {
 		log.Printf("Could not get a configured HTTP client due to err: %v", err)
-		return displayEvents, errors.New("could not get events")
+		return displayEvents, fmt.Errorf("could not get events: %w", err)
 	}
 	// TODO start service when new'in this up?
 	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))

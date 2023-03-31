@@ -10,6 +10,7 @@ import (
 type Events interface {
 	GetEventsStartingToday(ctx context.Context, limit int64) ([]types.DisplayEvent, error)
 	GetEventsStartingAt(ctx context.Context, time time.Time, limit int64) ([]types.DisplayEvent, error)
+	Name() string
 }
 
 type eventsDelegator struct {
@@ -24,11 +25,15 @@ func NewEventsDelegator(eventService ...Events) Events {
 	return &delegator
 }
 
+func (delegator *eventsDelegator) Name() string {
+	return "Delegator"
+}
+
 func (delegator *eventsDelegator) GetEventsStartingToday(ctx context.Context, limit int64) (allEvents []types.DisplayEvent, err error) {
 	for _, delegate := range delegator.delegates {
 		events, err := delegate.GetEventsStartingToday(ctx, limit)
 		if err != nil {
-			log.Printf("Error getting events from delegator %s: %v", delegate, err)
+			log.Printf("Error getting events from delegator %s: %v", delegate.Name(), err)
 			continue
 		}
 		allEvents = append(allEvents, events...)

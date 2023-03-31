@@ -37,7 +37,7 @@ Realistically:
 - [ ] Proper HTML templates instead of `const`
 - [ ] Better UI for the Today page
 - [ ] Better UI for the Setup page
-- [ ] Make use of the refresh token
+- [X] Make use of the refresh token
 - [ ] Select/input calendars to show
 - [ ] Support Outlook
 - [X] Separate into at least two API files (`/` and `/setup`)
@@ -94,11 +94,11 @@ This is what the file looks like if you followed the tutorial:
 ### Token(s)
 
 This is **not** a multi-tenant application. You currently can set up one Google account to view events from. When you 
-hit the `/setup` endpoint (or when the app detects that there are no tokens configured), you get a chance to configure 
-a token that will be used to request calendar events on your behalf.
+hit the `/setup` endpoint you get a chance to configure a token that will be used to request calendar events on your 
+behalf.
 
-> _NOTE_: your credentials never leave your computer, this is safe to use, I'm not tricking you. But I must say
-> that if you don't understand how all this works, you better not use this app at all.  
+> _NOTE_: your credentials are store in the app's memory only, this is safe to use, I'm not tricking you. But I must 
+> say that if you don't understand how all this works, you better not use this app at all.  
 
 ### Run
 
@@ -114,40 +114,20 @@ make SERVER_PORT=8888 run
 
 ### Deploy
 
-Well, since this uses OAuth to Google and Outlook, it's a pain to make this work on remote hosts. I'm not complaining,
-there's a reason for that. But, if you still are reading and really want to deploy in a remote host on your network:
+Well, since this uses OAuth to Google and Outlook, there's a little inconvenience to make this work on remote hosts. 
+I'm not complaining, there's a reason for that. But, if you still are reading and really want to deploy in a remote host
+on your network, for example:
 
 >_NOTE_: The following instructions assume you understand what you're doing, so, please, DO NOT CONTINUE if you are not
 > sure about anything that I said in the previous sessions. And good day. Bye!
 
-What I do to bypass the OAuth stuff is to run the app once in my local machine, where I can successfully use localhost
-to set up a token in a `token.json` file. This will contain your credentials to access Calendar (Google). 
+1. After starting the app, go to the `/setup` route.
+2. Click the generated link and allow the application on your account (that's going to happen all in Google).
+3. Google redirects you to something like `http://localhost:8080/setup?<lots-of-things-here>`.
+4. Change `http://localhost:8080` to whereever you deployed your app to, like `http://192.168.0.66` for example.
 
-Then I modify `.dockerignore` to stop ignoring the `token.json` file. And then I also modify `Dockerfile` to add a `COPY`
-line right after the line that copies `credentials.json`:
-
-```dockerfile
-COPY token.json token.json
-```
-
-After that, I connect to a remote docker host running on my local network:
-
-```bash
-docker context use kindle-calendar-reader
-```
-
-And finally I run the app again on this remote docker host:
-
-```bash
-make SERVER_PORT=80 run
-```
-
-Now, until the token expires (while I don't do a refresh of it), you're good to go by accessing the remote host in your
-browser.
-
-```
-http://192.168.0.66/
-```
+The app then gets the code that Google generates when you allowed the app in your account and exchange that for a token
+that has your credentials. It will use that to get the events from this point on.
 
 I personally use the [Executor Gnome extension](https://extensions.gnome.org/extension/2932/executor/) with the 
 following command to show my next event right on the top bar of my Operating System:
