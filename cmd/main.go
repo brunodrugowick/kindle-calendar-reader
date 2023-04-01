@@ -5,12 +5,13 @@ import (
 	eventsApi "kindle-calendar-reader/pkg/api/events"
 	"kindle-calendar-reader/pkg/api/json"
 	"kindle-calendar-reader/pkg/api/setup"
-	"kindle-calendar-reader/pkg/scheduler"
+	"kindle-calendar-reader/pkg/interval"
 	"kindle-calendar-reader/pkg/service/auth"
 	"kindle-calendar-reader/pkg/service/events"
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/brunodrugowick/go-http-server-things/pkg/server"
 	"golang.org/x/oauth2"
@@ -29,7 +30,8 @@ func main() {
 	eventsService := events.NewEventsDelegator(googleEventsService)
 
 	// Schedules
-	scheduler.Schedule(func() { log.Println("Everyday I'm shuffling") }, 86400)
+	stopShuffling := interval.RunAtInterval(func() { log.Println("Everyday I'm shuffling") }, 24*time.Hour)
+	defer close(stopShuffling)
 
 	// APIs
 	var apis []api.Api
