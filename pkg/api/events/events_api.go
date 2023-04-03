@@ -4,17 +4,22 @@ import (
 	"context"
 	"html/template"
 	"kindle-calendar-reader/pkg/api"
+	"kindle-calendar-reader/pkg/api/types"
 	"kindle-calendar-reader/pkg/service/events"
 	"log"
 	"net/http"
 )
 
 const todayPageTemplate = `<html><title>Today</title><body>
-{{range .}}
-	<div class="container">
-		<p><small>{{if .AllDay}} <b>All Day</b> {{else}}<b>{{.Day}}</b> {{.StartTime}} - {{.EndTime}} {{end}}</small><br>{{.Description}}
-	</div>
+{{range $date, $events := .}}
+	<h2>{{$date}}</h2>
+	<ul>
+		{{range $events}}
+			<u>{{if .AllDay}}{{"All Day"}}{{else}}{{.StartTime}} - {{.EndTime}}{{end}}</u> {{.Description}}<br>
+		{{end}}
+	</ul>
 {{end}}
+
 <p>That's it for today! See you tomorrow.
 </body></html>`
 
@@ -45,11 +50,13 @@ func getEvents(ctx context.Context, w http.ResponseWriter, r *http.Request, api 
 		http.Redirect(w, r, "/setup", http.StatusFound)
 	}
 
+	groupEventsByDay := types.GroupEventsByDay(displayEvents)
+
 	tmpl, err := template.New("Today").Parse(todayPageTemplate)
 	if err != nil {
 		log.Printf("Error creating template: %v", err)
 	}
-	err = tmpl.Execute(w, displayEvents)
+	err = tmpl.Execute(w, groupEventsByDay)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
