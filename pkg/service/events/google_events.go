@@ -21,7 +21,7 @@ const (
 	defaultMaxEvents           int64  = 20
 	defaultCalendarName        string = "primary"
 	defaultOrderBy             string = "startTime"
-	timePortionOfRFC3339Format string = "T15:04:05Z07:00"
+	timePortionOfRFC3339Format string = "T15:04:05+07:00"
 )
 
 func NewGoogleEventsService(authService auth.Auth) Events {
