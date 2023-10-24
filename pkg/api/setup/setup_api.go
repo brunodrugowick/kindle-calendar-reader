@@ -10,10 +10,25 @@ import (
 	"net/http"
 )
 
-const setupApiTokenTemplate = `<html><body>
+const setupApiTokenTemplate = `<html>
+<head><style>
+.dark-mode {
+  background-color: #121212; /* Dark background color */
+  color: #aaaaaa; /* Light text color */
+}
+</style></head>
+<body class="dark-mode">
 <div class="container">
-	<p><a href={{.GoogleUrl}}>Setup Google</a>
+	<h1> Available providers </h1>
+	{{ range $key, $value := . }}
+		<p><a href="{{$value}}">Setup {{$key}}</a>
+	{{end}}
 </div>
+
+<h2>Pages</h2>
+
+- <a href="/">Home</a>
+
 </body></html>`
 
 type setupApi struct {
