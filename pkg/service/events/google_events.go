@@ -59,16 +59,6 @@ func (service *events) Name() string {
 	return "Google Service"
 }
 
-func (service *events) GetEventsStartingToday(ctx context.Context, limit int64) ([]types.DisplayEvent, error) {
-	timeMin := startOfDay(time.Now())
-	displayEvents, err := service.getEvents(ctx, timeMin, limit)
-	if err != nil {
-		return []types.DisplayEvent{}, err
-	}
-
-	return displayEvents, nil
-}
-
 func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
 	displayEvents, err := service.getEvents(ctx, start, limit)
 	if err != nil {
