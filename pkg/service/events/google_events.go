@@ -32,7 +32,7 @@ func NewGoogleEventsService(auth *oauth2.Config) Events {
 	}
 }
 
-func (service *googleEvents) GetRedirectUrl(host string) string {
+func (service *googleEvents) GetRedirectUrl() string {
 	authURL := service.oauthConfig.AuthCodeURL(
 		"state-token",
 		oauth2.AccessTypeOffline)

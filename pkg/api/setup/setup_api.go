@@ -74,7 +74,7 @@ func (a *setupApi) GetPath() string {
 func setupRouteGetRequest(w http.ResponseWriter, r *http.Request, api *setupApi) {
 	providerTokens := make(map[string]string)
 	for _, provider := range api.eventsServices {
-		providerTokens[provider.GetProvider()] = provider.GetRedirectUrl(r.Host)
+		providerTokens[provider.GetProvider()] = provider.GetRedirectUrl()
 	}
 
 	tmpl, err := template.New("Setup").Parse(setupApiTokenTemplate)

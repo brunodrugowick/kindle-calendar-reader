@@ -8,7 +8,7 @@ import (
 )
 
 type Events interface {
-	GetRedirectUrl(host string) string
+	GetRedirectUrl() string
 	GetTokenFromCode(ctx context.Context, authCode string) bool
 	GetProvider() string
 	GetEventsStartingAt(ctx context.Context, time time.Time, limit int64) ([]types.DisplayEvent, error)
