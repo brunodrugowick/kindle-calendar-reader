@@ -14,7 +14,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-type events struct {
+type googleEvents struct {
 	autoRefreshClient *http.Client
 	oauthConfig       *oauth2.Config
 }
@@ -27,12 +27,12 @@ const (
 )
 
 func NewGoogleEventsService(auth *oauth2.Config) Events {
-	return &events{
+	return &googleEvents{
 		oauthConfig: auth,
 	}
 }
 
-func (service *events) GetRedirectUrl(host string) string {
+func (service *googleEvents) GetRedirectUrl(host string) string {
 	authURL := service.oauthConfig.AuthCodeURL(
 		"state-token",
 		oauth2.AccessTypeOffline)
@@ -41,7 +41,7 @@ func (service *events) GetRedirectUrl(host string) string {
 	return authURL
 }
 
-func (service *events) GetTokenFromCode(ctx context.Context, authCode string) bool {
+func (service *googleEvents) GetTokenFromCode(ctx context.Context, authCode string) bool {
 	tok, err := service.oauthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
 		log.Printf("Unable to retrieve token from web: %v", err)
@@ -51,15 +51,15 @@ func (service *events) GetTokenFromCode(ctx context.Context, authCode string) bo
 	return true
 }
 
-func (service *events) GetProvider() string {
+func (service *googleEvents) GetProvider() string {
 	return "Google"
 }
 
-func (service *events) Name() string {
+func (service *googleEvents) Name() string {
 	return "Google Service"
 }
 
-func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
+func (service *googleEvents) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
 	displayEvents, err := service.getEvents(ctx, start, limit)
 	if err != nil {
 		return []types.DisplayEvent{}, err
@@ -68,7 +68,7 @@ func (service *events) GetEventsStartingAt(ctx context.Context, start time.Time,
 	return displayEvents, nil
 }
 
-func (service *events) getEvents(ctx context.Context, startDate time.Time, limit int64) ([]types.DisplayEvent, error) {
+func (service *googleEvents) getEvents(ctx context.Context, startDate time.Time, limit int64) ([]types.DisplayEvent, error) {
 	if limit < 1 {
 		limit = defaultMaxEvents
 	}
