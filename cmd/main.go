@@ -25,8 +25,7 @@ func main() {
 
 	// Services
 	googleAppConfig := setupGoogleAppClient()
-	authService := auth.NewAuthService(googleAppConfig)
-	googleEventsService := events.NewGoogleEventsService(authService)
+	googleEventsService := events.NewGoogleEventsService(googleAppConfig)
 	eventsService := events.NewEventsDelegator(googleEventsService)
 
 	// Schedules
@@ -36,7 +35,7 @@ func main() {
 	// APIs
 	var apis []api.Api
 	apis = append(apis, eventsApi.NewEventsApi(eventsService, "/"))
-	apis = append(apis, setup.NewSetupApi(authService, "/setup"))
+	apis = append(apis, setup.NewSetupApi("/setup", googleEventsService))
 	apis = append(apis, json.NewJsonApi(eventsService, "/json"))
 
 	// Server

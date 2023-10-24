@@ -4,8 +4,7 @@ import (
 	"context"
 	"html/template"
 	"kindle-calendar-reader/pkg/api"
-	"kindle-calendar-reader/pkg/api/types"
-	"kindle-calendar-reader/pkg/service/auth"
+	"kindle-calendar-reader/pkg/service/events"
 	"log"
 	"net/http"
 )
@@ -32,14 +31,14 @@ const setupApiTokenTemplate = `<html>
 </body></html>`
 
 type setupApi struct {
-	auth auth.Auth
-	path string
+	eventsServices []events.Events
+	path           string
 }
 
-func NewSetupApi(authService auth.Auth, path string) api.Api {
+func NewSetupApi(path string, eventsServices ...events.Events) api.Api {
 	return &setupApi{
-		auth: authService,
-		path: path,
+		eventsServices: eventsServices,
+		path:           path,
 	}
 }
 
@@ -58,8 +57,13 @@ func (a *setupApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	case 0:
 		setupRouteGetRequest(w, r, a)
 	default:
-		a.auth.GetTokenFromCode(ctx, queryParams[codeQueryParam])
-		http.Redirect(w, r, "/", http.StatusFound)
+		// This is yuck because it's trying all providers to see which succeeds,
+		// but I'm ok with it for now.
+		for _, provider := range a.eventsServices {
+			if provider.GetTokenFromCode(ctx, queryParams[codeQueryParam]) {
+				http.Redirect(w, r, "/", http.StatusFound)
+			}
+		}
 	}
 }
 
@@ -68,8 +72,9 @@ func (a *setupApi) GetPath() string {
 }
 
 func setupRouteGetRequest(w http.ResponseWriter, r *http.Request, api *setupApi) {
-	displayToken := types.DisplaySetupInfo{
-		GoogleUrl: api.auth.GetRedirectUrl(r.Host),
+	providerTokens := make(map[string]string)
+	for _, provider := range api.eventsServices {
+		providerTokens[provider.GetProvider()] = provider.GetRedirectUrl(r.Host)
 	}
 
 	tmpl, err := template.New("Setup").Parse(setupApiTokenTemplate)
@@ -78,7 +83,7 @@ func setupRouteGetRequest(w http.ResponseWriter, r *http.Request, api *setupApi)
 		return
 	}
 
-	err = tmpl.Execute(w, displayToken)
+	err = tmpl.Execute(w, providerTokens)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}

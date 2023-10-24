@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/oauth2"
 	"kindle-calendar-reader/pkg/api/types"
-	"kindle-calendar-reader/pkg/service/auth"
 	"log"
+	"net/http"
 	"time"
 
 	"google.golang.org/api/calendar/v3"
@@ -14,7 +15,8 @@ import (
 )
 
 type events struct {
-	authService auth.Auth
+	autoRefreshClient *http.Client
+	oauthConfig       *oauth2.Config
 }
 
 const (
@@ -24,10 +26,33 @@ const (
 	timePortionOfRFC3339Format string = "T00:00:00+00:00"
 )
 
-func NewGoogleEventsService(authService auth.Auth) Events {
+func NewGoogleEventsService(auth *oauth2.Config) Events {
 	return &events{
-		authService: authService,
+		oauthConfig: auth,
 	}
+}
+
+func (service *events) GetRedirectUrl(host string) string {
+	authURL := service.oauthConfig.AuthCodeURL(
+		"state-token",
+		oauth2.AccessTypeOffline)
+	log.Printf("Redirect URL: %v", authURL)
+
+	return authURL
+}
+
+func (service *events) GetTokenFromCode(ctx context.Context, authCode string) bool {
+	tok, err := service.oauthConfig.Exchange(context.TODO(), authCode)
+	if err != nil {
+		log.Printf("Unable to retrieve token from web: %v", err)
+		return false
+	}
+	service.autoRefreshClient = service.oauthConfig.Client(ctx, tok)
+	return true
+}
+
+func (service *events) GetProvider() string {
+	return "Google"
 }
 
 func (service *events) Name() string {
@@ -58,11 +83,8 @@ func (service *events) getEvents(ctx context.Context, startDate time.Time, limit
 		limit = defaultMaxEvents
 	}
 	var displayEvents []types.DisplayEvent
-	client, err := service.authService.GetConfiguredHttpClient(ctx)
-	if err != nil {
-		log.Printf("Could not get a configured HTTP client due to err: %v", err)
-		return displayEvents, fmt.Errorf("could not get events: %w", err)
-	}
+	client := service.autoRefreshClient
+
 	// TODO start service when new'in this up?
 	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
@@ -111,15 +133,4 @@ func (service *events) getEvents(ctx context.Context, startDate time.Time, limit
 	}
 
 	return displayEvents, nil
-}
-
-// endOfDay is from https://stackoverflow.com/questions/25254443/return-local-beginning-of-day-time-object
-func endOfDay(t time.Time) time.Time {
-	year, month, day := t.Date()
-	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
-}
-
-// startOfDay is from https://stackoverflow.com/questions/25254443/return-local-beginning-of-day-time-object
-func startOfDay(t time.Time) time.Time {
-	return t.Truncate(24 * time.Hour)
 }

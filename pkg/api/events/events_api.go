@@ -35,11 +35,11 @@ const todayPageTemplate = `<html><title>Today</title>
 </body></html>`
 
 type eventsApi struct {
-	events events.Events
+	events events.Delegator
 	path   string
 }
 
-func NewEventsApi(events events.Events, path string) api.Api {
+func NewEventsApi(events events.Delegator, path string) api.Api {
 	return &eventsApi{
 		events: events,
 		path:   path,

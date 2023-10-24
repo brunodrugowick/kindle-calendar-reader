@@ -12,11 +12,11 @@ import (
 )
 
 type jsonApi struct {
-	events events.Events
+	events events.Delegator
 	path   string
 }
 
-func NewJsonApi(events events.Events, path string) api.Api {
+func NewJsonApi(events events.Delegator, path string) api.Api {
 	return &jsonApi{
 		events: events,
 		path:   path,
