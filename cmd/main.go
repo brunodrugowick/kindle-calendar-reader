@@ -6,7 +6,6 @@ import (
 	"kindle-calendar-reader/pkg/api/json"
 	"kindle-calendar-reader/pkg/api/setup"
 	"kindle-calendar-reader/pkg/interval"
-	"kindle-calendar-reader/pkg/service/auth"
 	"kindle-calendar-reader/pkg/service/events"
 	"log"
 	"os"
@@ -23,10 +22,16 @@ const defaultServerPort = 8080
 
 func main() {
 
-	// Services
+	// Services - Google
 	googleAppConfig := setupGoogleAppClient()
 	googleEventsService := events.NewGoogleEventsService(googleAppConfig)
-	eventsService := events.NewEventsDelegator(googleEventsService)
+
+	// Services - Outlook
+	outlookAppConfig := setupOutlookAppClient()
+	outlookEventsService := events.NewOutlookEventsService(outlookAppConfig)
+
+	// Services - Delegator
+	eventsService := events.NewEventsDelegator(googleEventsService, outlookEventsService)
 
 	// Schedules
 	stopShuffling := interval.RunAtInterval(func() { log.Println("Everyday I'm shuffling") }, 24*time.Hour)
@@ -35,7 +40,7 @@ func main() {
 	// APIs
 	var apis []api.Api
 	apis = append(apis, eventsApi.NewEventsApi(eventsService, "/"))
-	apis = append(apis, setup.NewSetupApi("/setup", googleEventsService))
+	apis = append(apis, setup.NewSetupApi("/setup", googleEventsService, outlookEventsService))
 	apis = append(apis, json.NewJsonApi(eventsService, "/json"))
 
 	// Server
@@ -65,5 +70,22 @@ func setupGoogleAppClient() *oauth2.Config {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
+	return config
+}
+
+func setupOutlookAppClient() *oauth2.Config {
+	b, err := os.ReadFile("outlookCredentials.json")
+	if err != nil {
+		log.Fatalf("Unable to read client secret file: %v", err)
+	}
+
+	// If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
+	if err != nil {
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
+	}
+
+	config.Scopes = []string{"https://graph.microsoft.com/.default"}
+
 	return config
 }

@@ -10,9 +10,8 @@ import (
 type Events interface {
 	GetRedirectUrl() string
 	GetTokenFromCode(ctx context.Context, authCode string) bool
-	GetProvider() string
+	GetProviderName() string
 	GetEventsStartingAt(ctx context.Context, time time.Time, limit int64) ([]types.DisplayEvent, error)
-	Name() string
 }
 
 type Delegator interface {
@@ -37,7 +36,7 @@ func (delegator *eventsDelegator) GetEventsStartingToday(ctx context.Context, li
 		timeMin := startOfDay(time.Now())
 		events, err := delegate.GetEventsStartingAt(ctx, timeMin, limit)
 		if err != nil {
-			log.Printf("Error getting events from delegator %s: %v", delegate.Name(), err)
+			log.Printf("Error getting events from delegator %s: %v", delegate.GetProviderName(), err)
 			continue
 		}
 		allEvents = append(allEvents, events...)

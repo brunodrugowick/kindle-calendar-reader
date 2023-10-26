@@ -51,12 +51,8 @@ func (service *googleEvents) GetTokenFromCode(ctx context.Context, authCode stri
 	return true
 }
 
-func (service *googleEvents) GetProvider() string {
+func (service *googleEvents) GetProviderName() string {
 	return "Google"
-}
-
-func (service *googleEvents) Name() string {
-	return "Google Service"
 }
 
 func (service *googleEvents) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
