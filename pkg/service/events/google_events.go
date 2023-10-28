@@ -47,6 +47,10 @@ func (service *googleEvents) GetTokenFromCode(ctx context.Context, authCode stri
 }
 
 func (service *googleEvents) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
+	if service.client == nil {
+		return []types.DisplayEvent{}, nil
+	}
+
 	displayEvents, err := service.getEvents(ctx, start, limit)
 	if err != nil {
 		return []types.DisplayEvent{}, err
