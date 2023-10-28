@@ -20,7 +20,11 @@ const setupApiTokenTemplate = `<html>
 <div class="container">
 	<h1> Available providers </h1>
 	{{ range $key, $value := . }}
-		<p><a href="{{$value}}">Setup {{$key}}</a>
+		{{if eq $key "Outlook"}}
+			<p><a href="{{$value}}">Setup {{$key}} (you need access to the app logs in its current state to properly sign-in to Outlook)</a>
+		{{else}}
+			<p><a href="{{$value}}">Setup {{$key}}</a>
+		{{end}}
 	{{end}}
 </div>
 
