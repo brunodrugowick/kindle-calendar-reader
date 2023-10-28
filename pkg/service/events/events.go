@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"golang.org/x/oauth2"
 	"kindle-calendar-reader/pkg/api/types"
 	"log"
 	"time"
@@ -12,6 +13,25 @@ type Events interface {
 	GetTokenFromCode(ctx context.Context, authCode string) bool
 	GetProviderName() string
 	GetEventsStartingAt(ctx context.Context, time time.Time, limit int64) ([]types.DisplayEvent, error)
+}
+
+type abstractService struct {
+	oauthConfig  *oauth2.Config
+	logger       *log.Logger
+	providerName string
+}
+
+func (service *abstractService) GetProviderName() string {
+	return service.providerName
+}
+
+func (service *abstractService) GetRedirectUrl() string {
+	authURL := service.oauthConfig.AuthCodeURL(
+		service.GetProviderName(),
+		oauth2.AccessTypeOffline)
+	service.logger.Printf("Redirect URL: %v", authURL)
+
+	return authURL
 }
 
 type Delegator interface {

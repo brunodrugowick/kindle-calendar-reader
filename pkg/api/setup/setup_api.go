@@ -42,12 +42,15 @@ func NewSetupApi(path string, eventsServices ...events.Events) api.Api {
 	}
 }
 
-const codeQueryParam = "code"
+const (
+	codeQueryParam     = "code"
+	providerQueryParam = "state"
+)
 
 func (a *setupApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	queryParams, err := api.ParseFormAndGetFromRequest(r, codeQueryParam)
+	queryParams, err := api.ParseFormAndGetFromRequest(r, codeQueryParam, providerQueryParam)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -57,10 +60,9 @@ func (a *setupApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	case 0:
 		setupRouteGetRequest(w, r, a)
 	default:
-		// This is yuck because it's trying all providers to see which succeeds,
-		// but I'm ok with it for now.
 		for _, provider := range a.eventsServices {
-			if provider.GetTokenFromCode(ctx, queryParams[codeQueryParam]) {
+			if provider.GetProviderName() == queryParams[providerQueryParam] &&
+				provider.GetTokenFromCode(ctx, queryParams[codeQueryParam]) {
 				http.Redirect(w, r, "/", http.StatusFound)
 			}
 		}

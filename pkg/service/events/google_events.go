@@ -15,8 +15,8 @@ import (
 )
 
 type googleEvents struct {
-	autoRefreshClient *http.Client
-	oauthConfig       *oauth2.Config
+	abstractService
+	client *http.Client
 }
 
 const (
@@ -28,31 +28,22 @@ const (
 
 func NewGoogleEventsService(auth *oauth2.Config) Events {
 	return &googleEvents{
-		oauthConfig: auth,
+		abstractService: abstractService{
+			oauthConfig:  auth,
+			logger:       log.New(log.Writer(), "Google Service ", 3),
+			providerName: "Google",
+		},
 	}
-}
-
-func (service *googleEvents) GetRedirectUrl() string {
-	authURL := service.oauthConfig.AuthCodeURL(
-		"state-token",
-		oauth2.AccessTypeOffline)
-	log.Printf("Redirect URL: %v", authURL)
-
-	return authURL
 }
 
 func (service *googleEvents) GetTokenFromCode(ctx context.Context, authCode string) bool {
 	tok, err := service.oauthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
-		log.Printf("Unable to retrieve token from web: %v", err)
+		service.logger.Printf("Unable to retrieve token from web: %v", err)
 		return false
 	}
-	service.autoRefreshClient = service.oauthConfig.Client(ctx, tok)
+	service.client = service.oauthConfig.Client(ctx, tok)
 	return true
-}
-
-func (service *googleEvents) GetProviderName() string {
-	return "Google"
 }
 
 func (service *googleEvents) GetEventsStartingAt(ctx context.Context, start time.Time, limit int64) ([]types.DisplayEvent, error) {
@@ -69,16 +60,16 @@ func (service *googleEvents) getEvents(ctx context.Context, startDate time.Time,
 		limit = defaultMaxEvents
 	}
 	var displayEvents []types.DisplayEvent
-	client := service.autoRefreshClient
+	client := service.client
 
 	// TODO start service when new'in this up?
 	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		log.Printf("Unable to retrieve Calendar client: %v", err)
+		service.logger.Printf("Unable to retrieve Calendar client: %v", err)
 		return displayEvents, errors.New("unable to retrieve Calendar client")
 	}
 
-	log.Printf("Getting events starting at %v", startDate)
+	service.logger.Printf("Getting events starting at %v", startDate)
 	googleEvents, err := srv.Events.
 		List(defaultCalendarName).
 		ShowDeleted(false).
@@ -88,7 +79,7 @@ func (service *googleEvents) getEvents(ctx context.Context, startDate time.Time,
 		OrderBy(defaultOrderBy).
 		Do()
 	if err != nil {
-		log.Printf("Unable to retrieve next %d of the user's events: %v", limit, err)
+		service.logger.Printf("Unable to retrieve next %d of the user's events: %v", limit, err)
 		return displayEvents, errors.New("error retrieving events from Google")
 	}
 
