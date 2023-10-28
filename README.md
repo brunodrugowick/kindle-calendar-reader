@@ -32,6 +32,12 @@ With all that in mind I thought of a very simple web application where:
 
 ## TODO
 
+For Outlook:
+
+- [ ] Get OAuth to work properly (or continue using DeviceCode grant but better)
+- [ ] Understand and properly process the events from the API
+- [ ] Actually understand Azure and how that crap works with regard to accessing the events of my personal calendar!
+
 Realistically:
 
 - [ ] Proper HTML templates instead of `const`
@@ -57,7 +63,7 @@ If I can dream (these are prioritized):
 4. Option to have a websocket updating the events automatically
 5. ...
 
-## Want to  use this?
+## Want to use this?
 
 Why? But ok, I can give you some directions...
 
