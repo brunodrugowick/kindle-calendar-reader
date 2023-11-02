@@ -10,7 +10,14 @@ import (
 	"net/http"
 )
 
-const todayPageTemplate = `<html><title>Today</title><body>
+const todayPageTemplate = `<html><title>Today</title>
+<head><style>
+.dark-mode {
+  background-color: #121212; /* Dark background color */
+  color: #aaaaaa; /* Light text color */
+}
+</style></head>
+<body class="dark-mode">
 {{range $date, $events := .}}
 	<h2>{{$date}}</h2>
 	<ul>
@@ -21,14 +28,18 @@ const todayPageTemplate = `<html><title>Today</title><body>
 {{end}}
 
 <p>That's it for today! See you tomorrow.
+
+<h2>Pages</h2>
+
+- <a href="/setup">Setup</a>
 </body></html>`
 
 type eventsApi struct {
-	events events.Events
+	events events.Delegator
 	path   string
 }
 
-func NewEventsApi(events events.Events, path string) api.Api {
+func NewEventsApi(events events.Delegator, path string) api.Api {
 	return &eventsApi{
 		events: events,
 		path:   path,

@@ -4,36 +4,57 @@ import (
 	"context"
 	"html/template"
 	"kindle-calendar-reader/pkg/api"
-	"kindle-calendar-reader/pkg/api/types"
-	"kindle-calendar-reader/pkg/service/auth"
+	"kindle-calendar-reader/pkg/service/events"
 	"log"
 	"net/http"
 )
 
-const setupApiTokenTemplate = `<html><body>
+const setupApiTokenTemplate = `<html>
+<head><style>
+.dark-mode {
+  background-color: #121212; /* Dark background color */
+  color: #aaaaaa; /* Light text color */
+}
+</style></head>
+<body class="dark-mode">
 <div class="container">
-	<p><a href={{.GoogleUrl}}>Setup Google</a>
+	<h1> Available providers </h1>
+	{{ range $key, $value := . }}
+		{{if eq $key "Outlook"}}
+			<p><a href="{{$value}}">Setup {{$key}} (you need access to the app logs in its current state to properly sign-in to Outlook)</a>
+		{{else}}
+			<p><a href="{{$value}}">Setup {{$key}}</a>
+		{{end}}
+	{{end}}
 </div>
+
+<h2>Pages</h2>
+
+- <a href="/">Home</a>
+
 </body></html>`
 
 type setupApi struct {
-	auth auth.Auth
-	path string
+	eventsServices []events.Events
+	path           string
 }
 
-func NewSetupApi(authService auth.Auth, path string) api.Api {
+func NewSetupApi(path string, eventsServices ...events.Events) api.Api {
 	return &setupApi{
-		auth: authService,
-		path: path,
+		eventsServices: eventsServices,
+		path:           path,
 	}
 }
 
-const codeQueryParam = "code"
+const (
+	codeQueryParam     = "code"
+	providerQueryParam = "state"
+)
 
 func (a *setupApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	queryParams, err := api.ParseFormAndGetFromRequest(r, codeQueryParam)
+	queryParams, err := api.ParseFormAndGetFromRequest(r, codeQueryParam, providerQueryParam)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -43,8 +64,12 @@ func (a *setupApi) HandleRequests(w http.ResponseWriter, r *http.Request) {
 	case 0:
 		setupRouteGetRequest(w, r, a)
 	default:
-		a.auth.GetTokenFromCode(ctx, queryParams[codeQueryParam])
-		http.Redirect(w, r, "/", http.StatusFound)
+		for _, provider := range a.eventsServices {
+			if provider.GetProviderName() == queryParams[providerQueryParam] &&
+				provider.GetTokenFromCode(ctx, queryParams[codeQueryParam]) {
+				http.Redirect(w, r, "/", http.StatusFound)
+			}
+		}
 	}
 }
 
@@ -53,8 +78,9 @@ func (a *setupApi) GetPath() string {
 }
 
 func setupRouteGetRequest(w http.ResponseWriter, r *http.Request, api *setupApi) {
-	displayToken := types.DisplaySetupInfo{
-		GoogleUrl: api.auth.GetRedirectUrl(r.Host),
+	providerTokens := make(map[string]string)
+	for _, provider := range api.eventsServices {
+		providerTokens[provider.GetProviderName()] = provider.GetRedirectUrl()
 	}
 
 	tmpl, err := template.New("Setup").Parse(setupApiTokenTemplate)
@@ -63,7 +89,7 @@ func setupRouteGetRequest(w http.ResponseWriter, r *http.Request, api *setupApi)
 		return
 	}
 
-	err = tmpl.Execute(w, displayToken)
+	err = tmpl.Execute(w, providerTokens)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
